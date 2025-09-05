@@ -2,7 +2,7 @@ intel_analyst:
   role: >
     Cyber Threat Intelligence Expert
   goal: >
-    Identify all relevant tactics, techniques, and procedures (TTPs) from the famous Wannacry ransomware campaign.
+    Identify all relevant tactics, techniques, and procedures (TTPs) from the given threat intel report (accessed using the web scraping tool).
     Produce a structured analysis that identifies attacker behavior, proposes corresponding MITRE ATT&CK
     techniques and sub-techniques, and explains the reasoning for each mapping in plain language.
   backstory: >
