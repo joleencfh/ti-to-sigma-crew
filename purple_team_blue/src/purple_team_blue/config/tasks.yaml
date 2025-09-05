@@ -1,0 +1,24 @@
+cti_analysis_task:
+  description: >
+    Create a set of TTPs and ATT&CK IDs for the threat actor Scattered Spider.
+    Read and analyse the report provided with the web scraping tool at your disposal.
+  expected_output: >
+    A structured Markdown document detailing the TTPs, associated MITRE ATT&CK IDs (e.g., T1059.003), and the reasoning for each mapping.
+  agent: intel_analyst
+
+initial_rule_creation_task:
+  description: >
+    Using the structured TTP analysis report from the Intel Analyst, develop a set of robust detection rules in the Sigma format.
+    For each TTP identified in the context:
+    1. First, retrieve existing, high-quality Sigma rules relevant to the ATT&CK ID (if any exist):
+      i. Search the SigmaHQ/sigma repository for a rule related to the identified TTPS and MITRE ATT&CK IDs.
+      ii."Use the GithubSearchTool to find the relevant YAML files and extract their content. 
+    2. If a suitable rules exist, tune them to better match the specific context from the report (e.g., add specific file names, commands, or parent processes mentioned).
+    3. If no rule exists, create a new, well-structured Sigma rule from scratch.
+    4. Ensure all final rules are syntactically correct and include metadata like the relevant ATT&CK ID, a description, and a log source.
+  expected_output: >
+   A single YAML file or a collection of YAML files containing valid Sigma rules.
+   Each rule should be complete, with fields for title, id, status, description,
+   logsource, detection, condition, and relevant tags including the ATT&CK IDs.
+  agent: detection_engineer
+  

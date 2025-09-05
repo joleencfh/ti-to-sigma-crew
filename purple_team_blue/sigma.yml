@@ -1,0 +1,162 @@
+- id: 'T1566.001'
+  title: 'Spear Phishing Link'
+  status: 'experimental'
+  description: 'Detects spear phishing attempts by monitoring for suspicious links in emails or communications.'
+  logsource:
+    product: 'email'
+    service: 'smtp'
+  detection:
+    selection:
+      subject: 
+        - '*urgent*'
+        - '*action required*'
+      body|contains: 
+        - 'click here'
+        - 'update your information'
+    condition: selection
+  tags:
+    - attack.t1086
+    - attack.t1566
+    - attack.t1566.001
+
+- id: 'T1059.001'
+  title: 'PowerShell Command Execution'
+  status: 'experimental'
+  description: 'Detects PowerShell command execution using suspicious or obfuscated commands.'
+  logsource:
+    product: 'windows'
+    service: 'powershell'
+  detection:
+    selection:
+      Image|endswith: 
+        - 'powershell.exe'
+      CommandLine|contains:
+        - 'Invoke-Expression'
+    condition: selection
+  tags:
+    - attack.t1059
+    - attack.t1059.001
+
+- id: 'T1078'
+  title: 'Valid Accounts'
+  status: 'experimental'
+  description: 'Detects the use of valid accounts for gaining unauthorized access.'
+  logsource:
+    product: 'windows'
+    service: 'authentication'
+  detection:
+    selection:
+      EventID: 
+        - 4624  # Logon event
+    condition: selection
+  tags:
+    - attack.t1078
+
+- id: 'T1088'
+  title: 'Bypass User Account Control'
+  status: 'experimental'
+  description: 'Detects attempts to bypass User Account Control mechanisms.'
+  logsource:
+    product: 'windows'
+    service: 'security'
+  detection:
+    selection:
+      EventID:
+        - 4672  # Special privileges assigned
+    condition: selection
+  tags:
+    - attack.t1088
+
+- id: 'T1027'
+  title: 'Obfuscated Files or Information'
+  status: 'experimental'
+  description: 'Detects the use of obfuscated files or information in processes.'
+  logsource:
+    product: 'windows'
+    service: 'process'
+  detection:
+    selection:
+      CommandLine|contains: 
+        - 'base64'
+        - 'encoded'
+    condition: selection
+  tags:
+    - attack.t1027
+
+- id: 'T1003.001'
+  title: 'Credential Dumping: NTDS.dit'
+  status: 'experimental'
+  description: 'Detects attempts to access and extract credentials from NTDS.dit file.'
+  logsource:
+    product: 'windows'
+    service: 'active_directory'
+  detection:
+    selection:
+      Image|endswith: 
+        - 'ntds.dit'
+    condition: selection
+  tags:
+    - attack.t1003
+    - attack.t1003.001
+
+- id: 'T1046'
+  title: 'Network Service Scanning'
+  status: 'experimental'
+  description: 'Detects network service scanning activities by monitoring for unusual TCP/UDP traffic patterns.'
+  logsource:
+    product: 'firewall'
+    service: 'network'
+  detection:
+    selection:
+      Action: 
+        - 'allow'
+    condition: selection
+  tags:
+    - attack.t1046
+
+- id: 'T1021.002'
+  title: 'Remote Services: SMB/Windows Admin Shares'
+  status: 'experimental'
+  description: 'Detects lateral movement attempts over SMB sharing.'
+  logsource:
+    product: 'windows'
+    service: 'smb'
+  detection:
+    selection:
+      EventID: 
+         - 5140  # Network share object accessed
+    condition: selection
+  tags:
+    - attack.t1021
+    - attack.t1021.002
+
+- id: 'T1041'
+  title: 'Exfiltration Over Command and Control Channel'
+  status: 'experimental'
+  description: 'Detects exfiltration of data over a command and control channel.'
+  logsource:
+    product: 'network'
+    service: 'http'
+  detection:
+    selection:
+      DestinationPort: 
+        - 80
+        - 443
+    condition: selection
+  tags:
+    - attack.t1041
+
+- id: 'T1486'
+  title: 'Data Encrypted for Impact'
+  status: 'experimental'
+  description: 'Detects malicious activities related to ransomware encryption.'
+  logsource:
+    product: 'windows'
+    service: 'file'
+  detection:
+    selection:
+      Extension: 
+        - '.encrypted'
+    condition: selection
+  tags:
+    - attack.t1486
