@@ -1,0 +1,505 @@
+title: UNC3944 - Spearphishing Link & Account Discovery (Developer Endpoint)
+id: 6d3f2e1a-5b4c-4d8e-9f0a-1b2c3d4e5f67
+status: stable
+description: >
+    Detects potential UNC3944 (Scattered Spider) activity on a Windows developer endpoint.
+    This rule aims to identify initial access attempts via malicious spearphishing links
+    (T1566.002) leading to suspicious downloads or LOLBin payload retrieval,
+    as well as post-compromise account enumeration (T1087.001, T1087.003) using
+    LOLBins or known reconnaissance tools. UNC3944 is known for sophisticated social
+    engineering and extensive reconnaissance.
+author: Sigma Rule Metadata Specialist
+date: 2025-09-18
+modified: null
+references:
+    - https://cloud.google.com/blog/topics/threat-intelligence/mandiant-unc3944-hardening-guidance
+logsource:
+    product: windows
+    service: sysmon
+detection:
+    initial_phish_browser_network_connection:
+        EventID: 3
+        ParentImage|endswith:
+            - '\outlook.exe'
+            - '\thunderbird.exe'
+        Image|endswith:
+            - '\chrome.exe'
+            - '\msedge.exe'
+            - '\firefox.exe'
+        DestinationPort:
+            - 80
+            - 443
+        DestinationHostname|re:
+            - '^(?:[a-zA-Z0-9-]+\\.)+(xyz|top|club|click|online|site|bid|win|stream|buzz|loan|racing|date|download|science|review|trade|gq|cf|ga|ml|tk)$'
+            - '^(?:[a-zA-9-]+\\.)+[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$'
+            - '^(?:[a-zA-Z0-9-]+\\.)+(duckdns\\.org|sytes\\.net|myfritz\\.net|ddns\\.net|no-ip\\.biz|no-ip\\.org|no-ip\\.com)$'
+    suspicious_browser_download_executable:
+        EventID: 11
+        Image|endswith:
+            - '\chrome.exe'
+            - '\msedge.exe'
+            - '\firefox.exe'
+        TargetFilename|endswith:
+            - '.exe'
+            - '.scr'
+            - '.hta'
+            - '.js'
+            - '.jse'
+            - '.vbs'
+            - '.vbe'
+            - '.ps1'
+            - '.dll'
+            - '.jar'
+            - '.msi'
+            - '.bat'
+            - '.cmd'
+        TargetFilename|contains:
+            - '\Users\'
+            - '\AppData\Local\Temp\'
+            - '\Windows\Temp\'
+            - '\ProgramData\'
+            - '\Recycle.Bin\'
+    lolbin_payload_download:
+        EventID: 1
+        Image|endswith:
+            - '\certutil.exe'
+            - '\bitsadmin.exe'
+            - '\powershell.exe'
+            - '\pwsh.exe'
+            - '\mshta.exe'
+            - '\regsvr32.exe'
+            - '\wmic.exe'
+        CommandLine|contains:
+            - ' -urlcache '
+            - ' -f -split -repfretrieve '
+            - ' /transfer '
+            - ' /download '
+            - ' /addfile '
+            - ' /setnotifycmdline '
+            - ' -enc '
+            - ' -e '
+            - ' -encodedCommand '
+            - 'Invoke-WebRequest'
+            - 'Invoke-Expression'
+            - '(New-Object System.Net.WebClient).DownloadFile'
+            - '(New-Object System.Net.WebClient).DownloadString'
+            - 'IEX (New-Object System.Net.WebClient).DownloadString'
+            - 'System.Net.WebRequest'
+            - 'Get-Content -Raw -Uri '
+            - 'mshta.exe http://'
+            - 'mshta.exe https://'
+            - '.hta'
+            - '.js'
+            - 'regsvr32.exe /s /u /i:'
+            - '.sct'
+            - '.dll'
+            - 'process call create'
+            - 'create '
+            - 'rundll32.exe '
+        CommandLine|re:
+            - 'http[s]?://[^\\s/]+\\S+\\.(exe|dll|ps1|vbs|js|jse|hta|sct|bat|cmd|jar|msi)'
+            - 'http[s]?://[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}(:\\d{1,5})?/\\S+\\.(exe|dll|ps1|vbs|js|jse|hta|sct|bat|cmd|jar|msi)'
+    account_recon_lolbins:
+        EventID: 1
+        Image|endswith:
+            - '\cmd.exe'
+            - '\powershell.exe'
+            - '\pwsh.exe'
+            - '\net.exe'
+            - '\whoami.exe'
+            - '\quser.exe'
+            - '\nltest.exe'
+            - '\dsquery.exe'
+        CommandLine|contains:
+            - ' net user '
+            - ' net localgroup administrators'
+            - ' whoami /all'
+            - ' whoami /groups'
+            - ' quser '
+            - ' Get-LocalGroupMember -Group Administrators'
+            - ' Get-LocalUser'
+            - ' net group "domain admins"'
+            - ' net group "enterprise admins"'
+            - ' net group "domain controllers"'
+            - ' net group "dnsadmins"'
+            - ' net accounts /domain'
+            - ' nltest /domain_trusts'
+            - ' nltest /dclist:'
+            - ' dsquery user -limit 0'
+            - ' dsquery group -limit 0'
+            - ' dsquery computer -limit 0'
+            - ' dsquery server -limit 0'
+            - 'Get-ADComputer -Filter *'
+            - 'Get-ADUser -Filter *'
+            - 'Get-ADGroup -Filter *'
+            - 'Get-ADDomain'
+            - 'Get-ADDomainController'
+            - ' -All '
+            - ' -Recursive '
+            - ' -property *'
+    known_recon_tool_execution:
+        EventID: 1
+        Image|endswith:
+            - '\SharpHound.exe'
+            - '\ADRecon.exe'
+            - '\ADExplorer.exe'
+            - '\BloodHound.exe'
+            - '\Rubeus.exe'
+            - '\Seatbelt.exe'
+        CommandLine|contains:
+            - '-CollectionMethod'
+            - '-OutputDirectory'
+            - '/snapshot'
+            - '/collect'
+            - '-f'
+            - '-csv'
+            - '-all'
+            - '-o'
+            - '-domain'
+            - 'all'
+            - 'full'
+            - 'sessions'
+            - 'rdpsessions'
+            - 'group'
+    ldap_smb_recon_traffic:
+        EventID: 3
+        DestinationPort:
+            - 389
+            - 636
+            - 445
+        Protocol:
+            - 'tcp'
+        Image|all:
+            - '!C:\Windows\System32\svchost.exe'
+            - '!C:\Windows\System32\lsass.exe'
+            - '!C:\Windows\explorer.exe'
+            - '!C:\Windows\System32\netlogon.dll'
+            - '!C:\Windows\System32\lsm.exe'
+            - '!C:\Windows\System32\aadcloudap.dll'
+            - '!C:\Windows\System32\systemsettings.exe'
+            - '!C:\Windows\System32\dsregcmd.exe'
+            - '!C:\Program Files\Google\Chrome\Application\chrome.exe'
+            - '!C:\Program Files\Microsoft Edge\Application\msedge.exe'
+            - '!C:\Program Files\nodejs\node.exe'
+            - '!C:\Program Files\Git\bin\git.exe'
+            - '!C:\Program Files\Java\*\bin\java.exe'
+            - '!C:\Program Files\Microsoft Visual Studio\*\Common7\IDE\devenv.exe'
+            - '!C:\Program Files\Microsoft VS Code\Code.exe'
+            - '!C:\Program Files\Docker\Docker\resources\com.docker.cli.exe'
+            - '!C:\Program Files\PowerShell\*\pwsh.exe'
+            - '!C:\Program Files\Go\bin\go.exe'
+            - '!C:\Program Files\JetBrains\*\bin\*.exe'
+            - '!C:\Program Files\Wireshark\Wireshark.exe'
+            - '!C:\Program Files\MyApp\InternalDevTool.exe'
+            - '!C:\Program Files (x86)\Common Files\MyCompany\AppSync.exe'
+        CommandLine|contains:
+            - 'ldap.exe -h'
+    filter_legit_interactive_commands:
+        ParentImage|endswith:
+            - '\explorer.exe'
+            - '\WindowsTerminal.exe'
+            - '\cmd.exe'
+            - '\powershell.exe'
+            - '\pwsh.exe'
+            - '\Code.exe'
+            - '\devenv.exe'
+        CommandLine|contains:
+            - ' net user '
+            - ' whoami /all'
+            - ' quser '
+            - 'Get-ADUser -Identity '
+            - 'Get-ADComputer -Identity '
+            - 'Get-ADGroup -Identity '
+            - ' net group '
+            - ' nltest /query'
+            - ' Get-NetIPConfiguration'
+            - ' Test-NetConnection '
+            - ' sc query '
+            - ' tasklist '
+            - ' taskkill '
+            - ' Get-WmiObject '
+            - ' gwmi '
+            - ' (Get-LocalGroup Administrators).Members '
+            - ' Get-Process -Name '
+            - ' Get-Service -Name '
+        CommandLine|not contains:
+            - ' -Filter *'
+            - ' -limit 0'
+            - ' domain_trusts'
+            - ' dclist'
+            - ' net group "domain admins"'
+            - ' net group "enterprise admins"'
+            - ' -All '
+            - ' -Recursive '
+            - ' -property *'
+            - ' -server '
+    filter_legit_downloads_updates:
+        TargetFilename|contains:
+            - '\Program Files\'
+            - '\Program Files (x86)\'
+            - '\JetBrains\'
+            - '\npm\cache\'
+            - '\NuGet\'
+            - '\pip\cache\'
+            - '\go\pkg\'
+            - '\gradle\caches\'
+            - '\maven\repository\'
+            - '\terraform\plugins\'
+            - '\vscode\extensions\'
+            - '\Users\*\.npm\'
+            - '\Users\*\.nuget\packages\'
+            - '\Users\*\.cargo\'
+            - '\Users\*\.go\'
+            - '\Users\*\.m2\repository\'
+            - '\Users\*\.gradle\caches\'
+            - '\Users\*\.terraform\plugins\'
+            - '\Users\*\node_modules\'
+            - '\Users\*\vendor\'
+            - '\ProgramData\chocolatey\'
+            - '\Program Files\nodejs\'
+            - '\Program Files\Git\'
+            - '\Program Files\Docker\'
+            - '\Program Files\Microsoft Visual Studio\'
+            - '\Program Files\Microsoft VS Code\'
+            - '\Program Files\PowerShell\'
+        TargetFilename|endswith:
+            - '.exe'
+            - '.msi'
+            - '.zip'
+            - '.tar.gz'
+            - '.vsix'
+            - '.jar'
+            - '.deb'
+            - '.rpm'
+            - '.nupkg'
+            - '.ps1'
+            - '.sh'
+        ParentImage|endswith:
+            - '\Code.exe'
+            - '\devenv.exe'
+            - '\npm.cmd'
+            - '\go.exe'
+            - '\choco.exe'
+            - '\winget.exe'
+            - '\python.exe'
+            - '\java.exe'
+            - '\Git.exe'
+            - '\dotnet.exe'
+    filter_legit_lolbin_tool_usage:
+        ParentImage|endswith:
+            - '\msiexec.exe'
+            - '\wuauclt.exe'
+            - '\SoftwareCenter.exe'
+            - '\Choco.exe'
+            - '\winget.exe'
+            - '\IntuneManagementExtension.exe'
+            - '\VsSetup.exe'
+            - '\VsInstaller.exe'
+            - '\Update.exe'
+            - '\Code.exe'
+            - '\cmd.exe'
+            - '\powershell.exe'
+            - '\pwsh.exe'
+            - '\npm.cmd'
+            - '\go.exe'
+            - '\cargo.exe'
+            - '\python.exe'
+            - '\dotnet.exe'
+            - '\Git.exe'
+            - '\SystemSettings.exe'
+        Image|endswith:
+            - '\certutil.exe'
+            - '\bitsadmin.exe'
+            - '\powershell.exe'
+            - '\pwsh.exe'
+        CommandLine|contains:
+            - 'github.com'
+            - 'nuget.org'
+            - 'chocolatey.org'
+            - 'microsoft.com'
+            - 'visualstudio.com'
+            - 'go.dev'
+            - 'nodejs.org'
+            - 'releases.ubuntu.com'
+            - 'releases.hashicorp.com'
+            - '.git/lfs/objects'
+            - 'registry.npmjs.org'
+            - 'crates.io'
+            - 'pkg.go.dev'
+            - 'repo.maven.apache.org'
+            - 'services.gradle.org'
+            - 'download.docker.com'
+            - 'dl.google.com'
+            - 'azuredocsupdates.blob.core.windows.net'
+            - 'githubusercontent.com'
+            - '.s3.amazonaws.com'
+            - '.blob.core.windows.net'
+        CommandLine|not contains:
+            - ' -ExecutionPolicy Bypass'
+            - ' -w Hidden'
+            - ' -WindowStyle Hidden'
+            - 'Invoke-Expression'
+            - 'IEX'
+            - 'DownloadString'
+            - 'DownloadFile'
+            - 'certutil -urlcache -f -split -repfretrieve '
+            - ' -enc '
+            - ' -encodedCommand '
+            - ' &([scriptblock]::create('
+            - ' (new-object IO.Compression.DeflateStream( (new-object IO.MemoryStream( , [System.Convert]::FromBase64String('
+    filter_legit_powershell_scripts:
+        ParentImage|endswith:
+            - '\powershell.exe'
+            - '\pwsh.exe'
+            - '\explorer.exe'
+            - '\WindowsTerminal.exe'
+            - '\taskeng.exe'
+            - '\Code.exe'
+            - '\devenv.exe'
+            - '\dotnet.exe'
+            - '\Git.exe'
+            - '\npm.cmd'
+            - '\choco.exe'
+            - '\winget.exe'
+            - '\python.exe'
+            - '\cmd.exe'
+        Image|endswith:
+            - '\powershell.exe'
+            - '\pwsh.exe'
+        CommandLine|contains:
+            - 'Get-Service'
+            - 'Get-Process'
+            - 'Get-NetAdapter'
+            - 'Test-NetConnection'
+            - 'Get-ChildItem -Recurse -Path '
+            - 'Invoke-RestMethod -Uri '
+            - 'Update-Help'
+            - 'Import-Module '
+            - 'Set-ItemProperty'
+            - 'gci -path registry::hklm\software'
+            - 'dotnet '
+            - 'npm '
+            - 'choco '
+            - 'winget '
+            - 'Invoke-Build'
+            - 'Start-Process '
+            - 'Stop-Process '
+            - 'New-Item '
+            - 'Set-Content '
+            - 'Read-Host '
+            - 'Write-Host '
+            - 'Register-CimProvider '
+        CommandLine|not contains:
+            - ' -enc '
+            - ' -e '
+            - ' -encodedCommand '
+            - 'Invoke-WebRequest'
+            - 'Invoke-Expression'
+            - 'IEX '
+            - 'DownloadString'
+            - 'DownloadFile'
+            - 'System.Net.WebClient'
+            - 'System.Net.WebRequest'
+            - ' -w hidden'
+            - ' -windowstyle hidden'
+            - ' -nop '
+            - ' -noninteractive '
+            - ' -executionpolicy bypass '
+            - ' &([scriptblock]::create('
+            - ' (new-object IO.Compression.DeflateStream( (new-object IO.MemoryStream( , [System.Convert]::FromBase64String('
+            - ' certutil -urlcache '
+            - ' bitsadmin /transfer '
+            - ' -command '
+    filter_legit_network_domains:
+        DestinationHostname|endswith:
+            - '.microsoft.com'
+            - '.google.com'
+            - '.github.com'
+            - '.azureedge.net'
+            - '.visualstudio.com'
+            - '.nuget.org'
+            - '.chocolatey.org'
+            - '.gitlab.com'
+            - '.amazon.com'
+            - '.docker.com'
+            - '.jetbrains.com'
+            - '.stackoverflow.com'
+            - '.stackexchange.com'
+            - '.cdnjs.cloudflare.com'
+            - '.bootstrapcdn.com'
+            - '.windowsupdate.com'
+            - '.update.microsoft.com'
+            - '.cdn.mozilla.net'
+            - '.update.code.visualstudio.com'
+            - '.internal.energyfirm.com'
+            - '.dev.internal.energyfirm.com'
+            - '.test.internal.energyfirm.com'
+            - '.repo.energyfirm.com'
+            - '.azurewebsites.net'
+            - '.cloudapp.net'
+            - '.s3-accelerate.amazonaws.com'
+            - '.ec2.internal'
+            - '.cloudfront.net'
+            - '.cdn.net'
+            - '.akamaihd.net'
+            - '.jfrog.io'
+            - '.npmjs.com'
+            - '.pkg.dev'
+            - '.crates.io'
+            - '.gcr.io'
+            - '.docker.io'
+            - '.dl.google.com'
+            - '.download.microsoft.com'
+            - '.windows.net'
+            - '.core.windows.net'
+            - '.developer.microsoft.com'
+            - '.docs.microsoft.com'
+            - '.learn.microsoft.com'
+    filter_legit_security_tools:
+        User|contains:
+            - 'developer.security.analyst'
+            - 'redteam_user'
+        Image|startswith:
+            - 'C:\Program Files\SecurityTools\'
+            - 'C:\ProgramData\ApprovedAuditTools\'
+    condition: initial_phish_browser_network_connection or suspicious_browser_download_executable or lolbin_payload_download or account_recon_lolbins or known_recon_tool_execution or ldap_smb_recon_traffic and not filter_legit_interactive_commands and not filter_legit_downloads_updates and not filter_legit_lolbin_tool_usage and not filter_legit_powershell_scripts and not filter_legit_network_domains and not filter_legit_security_tools
+falsepositives:
+    - Legitimate developer accessing internal or cloud-based development/test environments via email links.
+    - Downloads of legitimate software, SDKs, libraries, or package manager components (e.g., npm, pip, go get, NuGet, Chocolatey, winget) into user download/cache/temp directories.
+    - System processes or internal deployment scripts utilizing `bitsadmin.exe` for legitimate updates or file transfers from trusted sources.
+    - Developer scripts using `powershell.exe` for automation, API interactions (`Invoke-RestMethod`), or fetching trusted resources (e.g., build artifacts, configuration from internal servers).
+    - Interactive execution of `net`, `whoami`, `quser`, `Get-AD*` commands by developers for troubleshooting permissions, network connectivity, or system information.
+    - Authorized security personnel or developers with security responsibilities executing reconnaissance tools (e.g., BloodHound/SharpHound, ADExplorer) during approved security assessments or audits.
+    - Legitimate developer applications or build agents performing LDAP/SMB queries to Active Directory or network shares for authentication, user information, or resource access.
+    - Access to internal corporate domains, sanctioned cloud provider resources, or common content delivery networks (CDNs) used for development purposes.
+level: high
+tags:
+    - attack.initial_access
+    - attack.t1566.002
+    - attack.discovery
+    - attack.t1087.001
+    - attack.t1087.003
+    - phishing
+    - unc3944
+    - scattered_spider
+    - developer_endpoint
+    - windows
+    - network_connection
+    - process_creation
+    - download
+    - account_discovery
+fields:
+    - EventID
+    - Image
+    - CommandLine
+    - ParentImage
+    - ParentCommandLine
+    - User
+    - TargetFilename
+    - DestinationHostname
+    - DestinationIp
+    - DestinationPort
+    - Protocol
+    - Hashes
+    - OriginalFileName
+    - Product

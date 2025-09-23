@@ -1,0 +1,49 @@
+```yaml
+title: UNC3944 Credential Dumping and Remote Access Tool Usage
+id: 511985c4-2a6c-4b3e-9c2f-e8d1a12a3f72 # Placeholder - A unique UUID4 should be generated for a new rule
+status: experimental
+description: Detects TTPs used by UNC3944 (Scattered Spider) threat actor, specifically targeting a Windows developer endpoint. This rule focuses on activities related to OS credential dumping, particularly from LSASS memory (T1003.001), and the unauthorized use or installation of legitimate remote access software such as ScreenConnect or AnyDesk (T1219) to maintain persistence and control.
+references:
+    - https://www.mitre.org/attack/techniques/T1003/001
+    - https://www.mitre.org/attack/techniques/T1219
+    - # Add relevant UNC3944 threat intelligence reports or blogs here for specific context
+author: Sigma Rule Metadata Specialist
+date: 2023/10/27
+modified: 2023/10/27
+tags:
+    - attack.persistence
+    - attack.privilege_escalation
+    - attack.credential_access
+    - attack.defense_evasion
+    - attack.command_and_control
+    - attack.collection
+    - attack.t1003.001
+    - attack.t1219
+    - unc3944
+    - scattered_spider
+    - lsass
+    - remote_access_tool
+    - screenconnect
+    - anydesk
+    - windows
+level: critical
+mitre_attack:
+    - tactic: credential_access
+      technique: T1003 - OS Credential Dumping
+      subtechnique: T1003.001 - LSASS Memory
+    - tactic: persistence
+      technique: T1219 - Remote Access Software
+    - tactic: command_and_control
+      technique: T1219 - Remote Access Software
+    - tactic: collection
+      technique: T1003 - OS Credential Dumping
+logsource:
+    product: windows
+    service: sysmon
+    category:
+        - process_access
+        - process_creation
+        - network_connection
+        - file_event
+        - registry_event
+```
