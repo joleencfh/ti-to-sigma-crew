@@ -4,6 +4,8 @@ from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai_tools import RagTool, SerperDevTool
 from typing import List
 from .tools.custom_tools import SigmaRuleOutputTool, YAMLWriterTool
+import os
+
 
 
 serper_dev_tool = SerperDevTool()
@@ -13,12 +15,18 @@ sigma_rule_output_tool = SigmaRuleOutputTool()
 yaml_writer_tool = YAMLWriterTool()
 
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(current_dir))
+rule_schema_path = os.path.join(project_root, 'knowledge', 'sigma-detection-rule-schema.json')
+detection_example1_path = os.path.join(project_root, 'knowledge', 'sigma_robust_example.yml')
+detection_example2_path = os.path.join(project_root, 'knowledge', 'sigma_robust_example2.yml')
+
 rag_tool_threat_intel.add(data_type='web_page', source=r'https://www.ic3.gov/CSA/2025/250729.pdf')
 
 rag_tool_detection_engineering.add(data_type='web_page', source=r'https://github.com/SigmaHQ/sigma/wiki/Rule-Creation-Guide')
-rag_tool_detection_engineering.add(data_type="text_file", source=r'../../knowledge/sigma-detection-rule-schema.json')
-rag_tool_detection_engineering.add(data_type='text_file', source=r'../../knowledge/sigma_robust_example.yml')
-rag_tool_detection_engineering.add(data_type='text_file', source=r'../../knowledge/sigma_robust_example2.yml')
+rag_tool_detection_engineering.add(data_type="text_file", source=rule_schema_path)
+rag_tool_detection_engineering.add(data_type='text_file', source=detection_example1_path)
+rag_tool_detection_engineering.add(data_type='text_file', source=detection_example2_path)
 
 
 @CrewBase

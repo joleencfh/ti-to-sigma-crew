@@ -36,7 +36,7 @@ analyze_threat_requirements:
     - Scope definition and environmental considerations
     - Specific fields and values to monitor
   agent: threat_analyst_agent
-  output_file: "threat_analysis_brief.md"
+  
 
 create_rule_metadata:
   description: >
@@ -69,7 +69,7 @@ create_rule_metadata:
   agent: metadata_specialist_agent
   context: 
     - analyze_threat_requirements
-  output_file: "metadata.yml"
+
 
 develop_detection_logic:
   description: >

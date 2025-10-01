@@ -1,6 +1,6 @@
 import os, re, json
 from typing import Any, Type
-from ..sigma_models import SigmaRuleList
+from .sigma_models import SigmaRuleList
 from ruamel.yaml import YAML
 from crewai.tools import BaseTool
 from pydantic import BaseModel, ValidationError, Field
