@@ -1,78 +1,4 @@
-#cti_analysis_task:
-#  description: >
-#    Read and analyse the threat intel report provided with the RAG tool at your disposal.
-#    Extract the two most interesting TTPS (or ATT&CK IDs) for the behaviors described in the threat intel report.
-#    Then, learn more about these two TTPS by reading through the relevant pages on the official MITRE website (and if needed, other authoritative websites).
-#  expected_output: >
-#    A structured Markdown document detailing the TTPs, associated MITRE ATT&CK IDs (e.g., T1059.003), and the reasoning for each mapping.
-#  agent: intel_analyst
-#
-#initial_rule_creation_task:
-#  description: >
-#    Using the structured TTP analysis report from the Intel Analyst, develop a set of robust detection rules in the Sigma format.
-#    To do this, iterate through the list of TTPs one by one. For each behavior, generate a robust Sigma detection rule.
-#  expected_output: >
-#   A report describing how the search went for each TTP, with clear indication of whether any rule was found, what the rule looked like, and if the rule had
-#   to be modified or tuned to detect the behaviors described in the report.
-#   A YAML file or a collection of YAML files containing valid Sigma rules:
-#   - Each rule should be complete, with fields for title, id, status, description,
-#   logsource, detection, condition, and relevant tags including the ATT&CK IDs.
-#  agent: detection_engineer
-#  context:
-#  - cti_analysis_task
 
-  
-# Sigma Rule Creation Workflow (VERSION 2)
-
-#analyze_ttp:
-#  description: >
-#    1. Read and analyse the threat intel report provided with the RAG tool at your disposal.
-#    2. Extract the two most interesting TTPS (or ATT&CK IDs) for the behaviors described in the threat intel report.
-#    3. Then, learn more about these two TTPS by reading through the relevant pages on the official MITRE website (and if needed, other authoritative websites).
-#    4. Deconstruct it into its core components. Identify common processes, command-line arguments,
-#       parent processes, registry keys, file paths, and the attacker's primary objective.
-#    5. Study the `robust examples` to understand what makes a rule effective (specificity, filters).
-#  expected_output: >
-#    A structured report detailing the observable artifacts, common tools, behaviors, and key detection
-#    strategies associated with the selected TTPs, explicitly referencing lessons learned from the
-#    good rule examples.
-#  agent: threat_analyst
-#
-#draft_detection_logic:
-#  description: >
-#    Using the threat analysis report from the previous step, draft the core technical components of a
-#    Sigma rule. When using the Knowledge base tool, the 'query' argument must be a simple, concise string question.
-#    - Define the most appropriate `logsource` and `category`.
-#    - Create specific, multi-conditional `selection` blocks based on the analysis.
-#    - Proactively create `filter` blocks to exclude known-good behavior and potential false positives.
-#    - Define the `condition` that combines the selections and filters.
-#  expected_output: >
-#    A YAML snippet containing only the `logsource` and `detection` (with `selection`, `filter`,
-#    and `condition`) sections of the Sigma rule. The logic must be precise and robust.
-#  context:
-#    - analyze_ttp
-#  agent: detection_drafter
-#
-#finalize_sigma_rule:
-#  description: >
-#    Take the drafted detection logic and create a complete, production-ready Sigma rule.
-#    When using the Knowledge base tool, the 'query' argument must be a simple, concise string question.
-#    Your primary responsibilities are:
-#    1. Further work on the rule to make it as a specific as possible, to avoid raising large amounts of false positives
-#    2. Critically review the logic for other potential weaknesses
-#    2. Write all required metadata fields: `title`, `id` (use a new UUID), `status` (set to 'experimental'),
-#       `description` (be detailed), `references`, `author` (use 'AI Detection Crew'), `date`, `modified`,
-#       `tags` (including the TTP ID), `falsepositives` (be specific!), and `level` (e.g., high, medium).
-#    3. Format the final output as a single, complete Sigma rule in YAML format, ready to be deployed.
-#  expected_output: >
-#    A single, complete, well-formatted, and production-ready Sigma rule in YAML format, with all
-#    metadata fields thoroughly completed and the logic vetted for quality.
-#  context:
-#    - draft_detection_logic
-#  agent: rule_finalizer
-
-
-# VERSION 3
 
 analyze_threat_requirements:
   description: >
@@ -102,16 +28,6 @@ analyze_threat_requirements:
      date, September 23, 2025, as a fallback. Do not get stuck. Acknowledge the
      tool failure and proceed with the rest of the task using this fallback date.
     
-   # 4. Scope and Context:
-   #    - Define detection scope (endpoint, network, cloud)
-   #    - Identify environmental considerations
-   #    - Note any prerequisites or dependencies
-    
-   # Input: {threat_description}
-   # 
-   # Output: A structured threat analysis brief containing all above elements.
-  
-
   expected_output: >
     A comprehensive threat analysis brief in structured format including:
     - Threat classification and MITRE ATT&CK mapping
@@ -216,57 +132,7 @@ develop_detection_logic:
     - analyze_threat_requirements
     - create_rule_metadata
 
-#validate_sigma_rule:
-#  description: >
-#    Perform comprehensive validation of the complete Sigma rule for syntax correctness, 
-#    logical consistency, and adherence to best practices.
-#    
-#    Validation Areas:
-#    1. Syntax Validation:
-#       - Check YAML syntax and structure
-#       - Validate Sigma-specific syntax elements
-#       - Verify field mappings and value formats
-#    
-#    2. Logical Consistency:
-#       - Ensure condition references match selection names
-#       - Verify filter logic doesn't contradict selections
-#       - Check for logical impossibilities or redundancies
-#    
-#    3. Best Practices Review:
-#       - Assess performance implications
-#       - Review field naming conventions
-#       - Check for proper use of wildcards and operators
-#    
-#    4. Completeness Check:
-#       - Verify all required sections are present
-#       - Ensure metadata completeness and accuracy
-#       - Validate proper logsource specification
-#    
-#    5. Quality Assessment:
-#       - Evaluate detection coverage and accuracy
-#       - Assess potential for false positives/negatives
-#       - Review overall rule effectiveness
-#    
-#    If issues are identified, provide specific recommendations for improvement and 
-#    coordinate with relevant agents for corrections.
-#    
-#    Input: Complete Sigma rule from all previous tasks
-#    
-#    Output: Validation report with any issues identified and corrected rule if needed
-#  expected_output: >
-#    Comprehensive validation report including:
-#    - Syntax validation results with any errors identified
-#    - Logical consistency assessment
-#    - Best practices compliance evaluation
-#    - Specific recommendations for improvements
-#    - Final validated Sigma rule (corrected if necessary)
-#    - Quality score and effectiveness assessment
-#  agent: rule_validation_agent
-#  context:
-#    - analyze_threat_requirements
-#    - create_rule_metadata
-#    - develop_detection_logic
-#  output_file: "draft_sigma_rule.yml"
+
 
 analyze_false_positives:
   description: >
@@ -384,4 +250,3 @@ generate_atomic_sigma_rules:
     - create_rule_metadata
     - develop_detection_logic
     - analyze_false_positives
-  output_file: "final_rules.txt"

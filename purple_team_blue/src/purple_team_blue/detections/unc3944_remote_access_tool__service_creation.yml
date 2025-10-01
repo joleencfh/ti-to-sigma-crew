@@ -1,0 +1,62 @@
+title: UNC3944 Remote Access Tool - Service Creation
+id: a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6
+status: stable
+description: Detects the creation of Windows services by known remote access software
+  (e.g., AnyDesk, ScreenConnect, TeamViewer), a primary method for establishing persistence
+  by threat actors like UNC3944 (Scattered Spider). Focuses on service executables
+  run from unusual paths.
+references:
+- https://attack.mitre.org/groups/G1012/
+- https://attack.mitre.org/techniques/T1219/
+- https://attack.mitre.org/techniques/T1543.003/
+author: Principal Detection Strategist
+date: 2023/11/02
+modified: 2023/11/02
+tags:
+- attack.group_G1012
+- attack.t1219
+- attack.t1543.003
+- attack.tactic.persistence
+- detection.remote_access_tool
+- os.windows
+- security
+level: critical
+logsource:
+  product: windows
+  category: service_creation
+detection:
+  selection:
+    EventID:
+    - 4697
+    - 7045
+    ServiceName|contains:
+    - AnyDesk
+    - ScreenConnect
+    - AteraAgent
+    - RustDesk
+    - TeamViewer
+    ServiceFileName|contains:
+    - AnyDesk.exe
+    - ScreenConnect.Client.exe
+    - AteraAgent.exe
+    - RustDesk.exe
+    - TeamViewer.exe
+    ServiceFileName|startswith:
+    - C:\Users\
+    - C:\ProgramData\
+    - C:\Windows\Temp\
+  filter_whitelisted_teamviewer:
+    ServiceFileName|startswith:
+    - C:\Program Files (x86)\TeamViewer\
+    - C:\Program Files\TeamViewer\
+    ServiceName: TeamViewer
+  condition: selection and not filter_whitelisted_teamviewer
+fields:
+- EventID
+- ComputerName
+- User
+- ServiceName
+- ServiceFileName
+- ProcessId
+- CommandLine
+- LogonId

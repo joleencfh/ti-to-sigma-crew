@@ -1,0 +1,67 @@
+title: UNC3944 AD Reconnaissance - PowerShell Cmdlets
+id: 1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d
+status: stable
+description: Detects the use of PowerShell cmdlets (e.g., Get-ADUser, Get-ADComputer)
+  and ActiveDirectory module imports for Active Directory reconnaissance, a technique
+  often employed by UNC3944 (Scattered Spider). Includes filtering for known legitimate
+  developer activities.
+references:
+- https://attack.mitre.org/groups/G1012/
+- https://attack.mitre.org/techniques/T1201/
+- https://attack.mitre.org/techniques/T1201.001/
+- https://docs.microsoft.com/en-us/powershell/module/activedirectory/
+author: Principal Detection Strategist
+date: 2023/11/02
+modified: 2023/11/02
+tags:
+- attack.group_G1012
+- attack.t1201
+- attack.t1201.001
+- attack.tactic.discovery
+- detection.ad_reconnaissance
+- os.windows
+- powershell
+level: high
+logsource:
+  product: windows
+  category: powershell_script_block
+detection:
+  selection:
+    EventID: 4104
+    ScriptBlockText|contains:
+    - Get-ADUser
+    - Get-ADComputer
+    - Get-ADGroup
+    - Get-ADDomainController
+    - Get-ADDomain
+    - Get-ADForest
+    - Find-ADObject
+    - Search-ADAccount
+    - Find-ADLocalGroup
+    - Import-Module ActiveDirectory
+    ScriptBlockText|re: Get-AD(User|Computer|Group|Domain|Forest|Object|DomainController)\b
+  filter_legitimate_dev_activity:
+    EventID: 4104
+    __or__:
+    - ParentImage|endswith:
+      - \devenv.exe
+      - \Code.exe
+      - \Rider.exe
+      - \powershell_ise.exe
+    - ScriptBlockText|contains:
+      - C:\DevProjects\ADIntegration\Scripts\test-ad.ps1
+      - C:\Users\<DeveloperUser>\Documents\PowerShellModules\MyADModule\*.ps1
+      - C:\Program Files\CompanyMonitoringTool\AD-Script.ps1
+  condition: selection and not filter_legitimate_dev_activity
+fields:
+- EventID
+- ComputerName
+- User
+- ScriptBlockText
+- CommandLine
+- ParentCommandLine
+- ParentImage
+- Hashes
+- ProcessId
+- ParentProcessId
+- LogonId

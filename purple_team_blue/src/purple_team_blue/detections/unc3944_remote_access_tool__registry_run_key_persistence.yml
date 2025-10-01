@@ -1,0 +1,59 @@
+title: UNC3944 Remote Access Tool - Registry Run Key Persistence
+id: b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e
+status: stable
+description: Detects registry modifications to 'Run' keys for establishing persistence
+  of known remote access software (e.g., AnyDesk, TeamViewer), a common technique
+  employed by threat actors like UNC3944 (Scattered Spider).
+references:
+- https://attack.mitre.org/groups/G1012/
+- https://attack.mitre.org/techniques/T1219/
+- https://attack.mitre.org/techniques/T1547.001/
+author: Principal Detection Strategist
+date: 2023/11/02
+modified: 2023/11/02
+tags:
+- attack.group_G1012
+- attack.t1219
+- attack.t1547.001
+- attack.tactic.persistence
+- attack.tactic.defense_evasion
+- detection.remote_access_tool
+- os.windows
+- sysmon
+level: critical
+logsource:
+  product: windows
+  category: registry_event
+detection:
+  selection:
+    EventID:
+    - 12
+    - 13
+    TargetObject|contains:
+    - SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+    - SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run
+    - SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce
+    - SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\RunOnce
+    Details|contains:
+    - AnyDesk.exe
+    - ScreenConnect.Client.exe
+    - AteraAgent.exe
+    - RustDesk.exe
+    - TeamViewer.exe
+  filter_whitelisted_teamviewer:
+    __and__:
+    - Details|startswith:
+      - C:\Program Files (x86)\TeamViewer\
+      - C:\Program Files\TeamViewer\
+    - Details|endswith: TeamViewer.exe
+  condition: selection and not filter_whitelisted_teamviewer
+fields:
+- EventID
+- ComputerName
+- User
+- TargetObject
+- Details
+- Image
+- CommandLine
+- ProcessId
+- LogonId

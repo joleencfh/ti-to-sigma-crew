@@ -1,0 +1,54 @@
+title: UNC3944 AD Reconnaissance - Known Tools Execution
+id: f0e3a1d2-c4b5-4d6a-8e9f-0123456789ab
+status: stable
+description: Detects the execution of known Active Directory reconnaissance tools
+  (SharpHound, ADExplorer, ADRecon) associated with UNC3944 (Scattered Spider) activity.
+  These tools are commonly used for privilege escalation and lateral movement planning.
+references:
+- https://attack.mitre.org/groups/G1012/
+- https://attack.mitre.org/techniques/T1201/
+- https://attack.mitre.org/techniques/T1201.001/
+author: Principal Detection Strategist
+date: 2023/11/02
+modified: 2023/11/02
+tags:
+- attack.group_G1012
+- attack.t1201
+- attack.t1201.001
+- attack.tactic.discovery
+- detection.ad_reconnaissance
+- os.windows
+- sysmon
+- security
+level: critical
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection:
+    EventID:
+    - 1
+    - 4688
+    OriginalFileName|contains:
+    - SharpHound
+    - ADExplorer
+    - ADRecon
+    CommandLine|contains:
+    - ' -CollectionMethod '
+    - ' -c LdapSearch '
+    - ' -target '
+    - ' --ldap-search '
+  condition: selection
+fields:
+- EventID
+- ComputerName
+- User
+- CommandLine
+- ParentCommandLine
+- ParentImage
+- Image
+- OriginalFileName
+- Hashes
+- ProcessId
+- ParentProcessId
+- LogonId

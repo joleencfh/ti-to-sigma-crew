@@ -1,0 +1,74 @@
+title: UNC3944 Remote Access Tool - Process Execution
+id: 5f6e7d8c-9a0b-1c2d-3e4f-5a6b7c8d9e0f
+status: stable
+description: Detects the execution of known remote access software (AnyDesk, ScreenConnect,
+  AteraAgent, RustDesk, TeamViewer) often leveraged by UNC3944 (Scattered Spider)
+  for persistent access and control. Prioritizes execution from unusual paths or with
+  installation parameters.
+references:
+- https://attack.mitre.org/groups/G1012/
+- https://attack.mitre.org/techniques/T1219/
+author: Principal Detection Strategist
+date: 2023/11/02
+modified: 2023/11/02
+tags:
+- attack.group_G1012
+- attack.t1219
+- attack.tactic.command_and_control
+- attack.tactic.persistence
+- detection.remote_access_tool
+- os.windows
+- sysmon
+- security
+level: critical
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection:
+    EventID:
+    - 1
+    - 4688
+    __or__:
+    - OriginalFileName|contains:
+      - AnyDesk
+      - ScreenConnect.Client
+      - AteraAgent
+      - RustDesk
+      - TeamViewer
+    - Image|contains:
+      - AnyDesk.exe
+      - ScreenConnect.Client.exe
+      - AteraAgent.exe
+      - RustDesk.exe
+      - TeamViewer.exe
+      Image|startswith:
+      - C:\Users\
+      - C:\ProgramData\
+      - C:\Windows\Temp\
+    CommandLine|contains:
+    - ' --install '
+    - ' -service '
+    - ' --silent '
+    - ' --unattended '
+    - ' /install '
+    - ' /S '
+  filter_whitelisted_teamviewer:
+    Image|startswith:
+    - C:\Program Files (x86)\TeamViewer\
+    - C:\Program Files\TeamViewer\
+    OriginalFileName: TeamViewer.exe
+  condition: selection and not filter_whitelisted_teamviewer
+fields:
+- EventID
+- ComputerName
+- User
+- CommandLine
+- ParentCommandLine
+- ParentImage
+- Image
+- OriginalFileName
+- Hashes
+- ProcessId
+- ParentProcessId
+- LogonId

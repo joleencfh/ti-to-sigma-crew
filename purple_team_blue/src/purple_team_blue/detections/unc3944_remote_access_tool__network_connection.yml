@@ -1,0 +1,60 @@
+title: UNC3944 Remote Access Tool - Network Connection
+id: c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8
+status: stable
+description: Detects outbound network connections initiated by known remote access
+  software (e.g., AnyDesk, TeamViewer) to their default communication ports, indicating
+  active remote control by threat actors like UNC3944 (Scattered Spider).
+references:
+- https://attack.mitre.org/groups/G1012/
+- https://attack.mitre.org/techniques/T1219/
+- https://attack.mitre.org/techniques/T1071.001/
+author: Principal Detection Strategist
+date: 2023/11/02
+modified: 2023/11/02
+tags:
+- attack.group_G1012
+- attack.t1219
+- attack.t1071.001
+- attack.tactic.command_and_control
+- detection.remote_access_tool
+- os.windows
+- sysmon
+level: critical
+logsource:
+  product: windows
+  category: network_connection
+detection:
+  selection:
+    EventID: 3
+    Initiated: 'true'
+    DestinationPort:
+    - 7070
+    - 5938
+    - 443
+    - 80
+    Image|endswith:
+    - \AnyDesk.exe
+    - \TeamViewer.exe
+    - \ScreenConnect.Client.exe
+    - \AteraAgent.exe
+    - \RustDesk.exe
+  filter_whitelisted_teamviewer:
+    Image|startswith:
+    - C:\Program Files (x86)\TeamViewer\
+    - C:\Program Files\TeamViewer\
+    Image|endswith: TeamViewer.exe
+  condition: selection and not filter_whitelisted_teamviewer
+fields:
+- EventID
+- ComputerName
+- User
+- Image
+- CommandLine
+- DestinationIp
+- DestinationPort
+- Protocol
+- Initiated
+- ProcessId
+- LogonId
+- RuleName
+- SourceImage
