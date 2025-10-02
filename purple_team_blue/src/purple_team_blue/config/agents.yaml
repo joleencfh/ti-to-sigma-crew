@@ -149,6 +149,6 @@ principal_detection_engineer:
   memory: true
   max_iter: 3
   max_rpm: 10
-  max_execution_time: 500
+  max_execution_time: 1500
   expected_output: a set of YAML files, one for each Sigma rule. Please use the YAML writer tool at your disposal to convert the your (JSON) output to a set of YML files.
 

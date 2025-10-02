@@ -240,6 +240,11 @@ generate_atomic_sigma_rules:
       - Targeted Filtering: Each atomic rule must have its own specific filters designed to weed out false positives 
         FOR THAT SPECIFIC BEHAVIOR. Filters for a network rule are different from filters for a process rule.
 
+    Other instructions:
+    - Ensure the detection field is a dictionary where keys are search identifiers (like 'selection') 
+      and their values are lists of dictionaries or simple dictionaries defining the criteria.
+    - Remember to call the Sigma Rule Structuring Tool with all the necessary fields from the rule you have developed.
+
   expected_output: >
     A final response containing a collection of multiple, separate Sigma rules in YAML format. Each rule must be atomic, targeting one specific behavior, 
     and meticulously engineered with targeted filters to ensure a high signal-to-noise ratio and production-readiness.

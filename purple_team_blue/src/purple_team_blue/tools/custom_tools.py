@@ -15,9 +15,26 @@ class SigmaRuleOutputTool(BaseTool):
     """
     name: str = "Sigma Rule Structuring Tool"
     description: str = (
-        "Use this tool to format the final Sigma rule. "
-        "Provide all the required fields to create a complete and valid rule. "
-        "The tool will validate the inputs and return the final rule in a structured format."
+        """
+         Use this tool to format the final Sigma rule. 
+        Provide all the required fields to create a complete and valid rule. 
+        The tool will validate the inputs and return the final rule in a structured format. 
+        
+        **CRITICAL ACTION REQUIRED:** The required input structure is complex. 
+        Before calling this tool, **YOU MUST** retrieve and consult the file named 
+        "**'sigma-detection-rule-schema.json'** using the RAG tool. 
+        Use this schema as your **absolute blueprint** for the tool's arguments. 
+        The tool accepts a list of Sigma rules, like so: 
+        {
+            "rules": [
+                { /* SigmaRule 1 fields */ },
+                { /* SigmaRule 2 fields */ }
+            ]
+        }
+        Pay meticulous attention to the nested dictionary structure of the **'detection'** field, 
+        as this is the most common point of failure.
+
+        """
     )
     args_schema: Type[BaseModel] = SigmaRuleList  
 
